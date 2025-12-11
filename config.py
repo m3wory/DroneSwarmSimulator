@@ -1,0 +1,177 @@
+"""
+Конфигурационный файл для симулятора роя дронов
+"""
+
+# ==================== Окно и отображение ====================
+SCREEN_WIDTH = 1200
+SCREEN_HEIGHT = 800
+FPS = 60
+
+# ==================== Цвета ====================
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+BLUE = (50, 150, 255)
+RED = (255, 50, 50)
+GREEN = (50, 255, 50)
+YELLOW = (255, 255, 50)
+PURPLE = (200, 50, 200)
+ORANGE = (255, 165, 0)
+GRAY = (128, 128, 128)
+DARK_GRAY = (64, 64, 64)
+LIGHT_BLUE = (100, 200, 255)
+CYAN = (0, 255, 255)
+
+# ==================== Пороговые значения ====================
+HP_LOW = 30
+ENERGY_LOW = 30
+
+# ==================== Расстояния взаимодействия ====================
+COLLISION_DIST = 20
+PICKUP_DIST = 20
+CHARGE_DIST = 15
+
+# ==================== Параметры пути ====================
+PATH_UPDATE_CHANCE = 0.01
+
+# ==================== Параметры дрона ====================
+DRONE_MAX_HP = 100.0
+DRONE_MAX_ENERGY = 100.0
+DRONE_SPEED = 3.0
+DRONE_MAX_SPEED = 3.4
+DRONE_MAX_FORCE = 0.32
+DRONE_MOTION_ALPHA = 0.16
+DRONE_FORMATION_ALPHA = 0.08
+DRONE_PERCEPTION_RADIUS = 90.0
+DRONE_SEPARATION_RADIUS = 36.0
+DRONE_SIZE = 8
+DRONE_COLOR = BLUE
+
+# Параметры координатора
+COORDINATOR_SIZE = 12
+COORDINATOR_COLOR = PURPLE
+
+# ==================== Параметры сенсоров ====================
+SENSOR_PROXIMITY_RANGE = 80.0
+SENSOR_OBJECT_DETECTOR_RANGE = 100.0
+SENSOR_COLLISION_RANGE = 30.0
+
+# ==================== Параметры движения ====================
+ENERGY_DRAIN_RATE = 0.2
+ENERGY_DRAIN_IDLE = 0.1
+ENERGY_DRAIN_MOVING = 2.0
+ENERGY_DRAIN_CARRYING = 8.0
+ENERGY_DRAIN_REPAIRING = 0.1
+ENERGY_DRAIN_RECHARGING = 0.0
+HP_DAMAGE_CHANCE = 0.001
+HP_DAMAGE_AMOUNT = 0.1
+COLLISION_DAMAGE = 0.5
+DRONE_COLLISION_DAMAGE = 0.2
+
+# ==================== Параметры A* поиска пути ====================
+A_STAR_GRID_SIZE = 20
+
+# ==================== Параметры поведения дронов ====================
+BOIDS_SEPARATION_WEIGHT = 2.2
+BOIDS_ALIGN_WEIGHT = 1.0
+BOIDS_COHESION_WEIGHT = 1.0
+BOIDS_OBSTACLE_AVOIDANCE_WEIGHT = 3.0
+BOIDS_EDGE_AVOIDANCE_WEIGHT = 2.0
+BOIDS_EDGE_MARGIN = 80
+BOIDS_OBSTACLE_AVOIDANCE_DISTANCE = 60
+
+# ==================== Параметры формирования ====================
+FORMATION_ARRIVAL_DISTANCE = 50
+FORMATION_GROUP_TOLERANCE = 50
+
+# ==================== Параметры объектов ====================
+CARGO_SMALL_SIZE = 10
+CARGO_MEDIUM_SIZE = 14
+CARGO_LARGE_SIZE = 18
+CARGO_SMALL_COLOR = GREEN
+CARGO_MEDIUM_COLOR = ORANGE
+CARGO_LARGE_COLOR = PURPLE
+CARGO_SPEED_SMALL = 0.9
+CARGO_SPEED_MEDIUM = 0.7
+CARGO_SPEED_LARGE = 0.5
+
+# ==================== Параметры препятствий ====================
+OBSTACLE_DEFAULT_SIZE = 50
+OBSTACLE_COLOR = DARK_GRAY
+
+# ==================== Параметры станций ====================
+FACILITY_SIZE = 40
+CHARGING_STATION_COLOR = LIGHT_BLUE
+CHARGING_STATION_RATE = 10
+WORKSHOP_COLOR = ORANGE
+WORKSHOP_RATE = 10
+
+# ==================== Параметры UI ====================
+UI_FONT_SMALL = 20
+UI_FONT_MEDIUM = 24
+UI_FONT_LARGE = 32
+
+# Панель информации
+INFO_PANEL_WIDTH = 320
+INFO_PANEL_X_OFFSET = 20
+INFO_PANEL_Y_OFFSET = 80
+INFO_PANEL_MAX_VISIBLE_DRONES = 6
+INFO_PANEL_CARD_HEIGHT = 68
+INFO_PANEL_TOGGLE_WIDTH = 32
+INFO_PANEL_TOGGLE_HEIGHT = 24
+INFO_PANEL_BG_COLOR = (20, 24, 30, 220)
+
+# Контекстное меню
+CONTEXT_MENU_WIDTH = 150
+CONTEXT_MENU_ITEM_HEIGHT = 30
+CONTEXT_MENU_BG_ALPHA = 230
+
+# Редактор меню
+EDITOR_MENU_WIDTH = 180
+EDITOR_MENU_X_OFFSET = 190
+EDITOR_MENU_Y_OFFSET = 50
+
+# ==================== Параметры координатора ====================
+COORDINATOR_MIN_HP_FOR_TASK = 40
+COORDINATOR_MIN_ENERGY_FOR_TASK = 30
+COORDINATOR_BID_DISTANCE_WEIGHT = 1.0
+COORDINATOR_BID_ENERGY_WEIGHT = 0.5
+COORDINATOR_BID_HP_WEIGHT = 0.3
+COORDINATOR_BID_PRIORITY_WEIGHT = 10
+
+# ==================== Параметры инициализации мира ====================
+INITIAL_DRONE_COUNT = 10
+INITIAL_DRONE_SPAWN_RADIUS = 150
+INITIAL_CHARGING_STATIONS = [
+    (100, 100),
+    (SCREEN_WIDTH - 100, 100)
+]
+INITIAL_WORKSHOPS = [
+    (100, SCREEN_HEIGHT - 100),
+    (SCREEN_WIDTH - 100, SCREEN_HEIGHT - 100)
+]
+INITIAL_CARGO_SMALL = 10
+INITIAL_CARGO_MEDIUM = 10
+INITIAL_CARGO_LARGE = 10
+
+LOAD_ZONE_RECT = (20, 120, 120, SCREEN_HEIGHT - 260)
+UNLOAD_ZONE_RECT = (SCREEN_WIDTH - 140, 120, 120, SCREEN_HEIGHT - 260)
+
+FORMATION_DRONE_COUNT = 4
+UNLOAD_SUBSPOTS = 6
+
+COORDINATOR_AVOID_ZONE_SIZE = 50
+
+COLLISION_COOLDOWN = 0.6
+
+# ==================== Параметры сетки ====================
+GRID_CELL_SIZE = 40
+GRID_COLOR = (200, 225, 255)
+
+# ==================== Параметры визуализации ====================
+VELOCITY_VISUALIZATION_SCALE = 3
+PATH_WAYPOINT_RADIUS = 2
+PATH_VISIBLE_WAYPOINTS = 5
+SELECTION_CIRCLE_OFFSET = 3
+CARRYING_OBJECT_OFFSET = 12
+CARRYING_OBJECT_RADIUS = 3
+DRONE_ID_OFFSET_Y = 20
