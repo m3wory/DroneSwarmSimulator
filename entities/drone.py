@@ -1,7 +1,6 @@
 import math
 import random
 from typing import List, Optional, Tuple
-
 import pygame
 
 import config
@@ -10,7 +9,6 @@ from core.enums import CommandType, DroneState
 from core.pathfinding import AStarPathfinder
 from core.vector import Vector2D
 from entities.objects import CargoType
-
 
 class Sensor:
     def __init__(self, sensor_type: str, range_val: float):
@@ -25,7 +23,6 @@ class Sensor:
             if hasattr(obj, "pos") and pos.distance_to(obj.pos) <= self.range
         ]
         return self.detected_objects
-
 
 class Drone:
     drone_id_counter = 0
@@ -62,7 +59,6 @@ class Drone:
         self.separation_radius = config.DRONE_SEPARATION_RADIUS
         self.size = config.DRONE_SIZE
         self.color = config.DRONE_COLOR
-        self.collect_timer = 0
         self.distance_traveled = 0.0
         self.last_collision_time = 0.0
         self.executing_since = None
@@ -70,7 +66,11 @@ class Drone:
     def apply_force(self, force: Vector2D):
         self.acceleration = self.acceleration + force
 
-    def update(self, dt: float, drones: List, obstacles: List):
+    def update(self, dt: float, drones: List, obstacles: List, objects: List = None, charging_stations: List = None, workshops: List = None):
+        objects = objects or []
+        charging_stations = charging_stations or []
+        workshops = workshops or []
+
         drain = config.ENERGY_DRAIN_RATE * self._energy_drain_factor()
         self.energy = max(0, self.energy - drain * dt)
         if random.random() < config.HP_DAMAGE_CHANCE:
@@ -85,18 +85,19 @@ class Drone:
 
         for sensor in self.sensors.values():
             sensor.detect(self.pos, obstacles + drones)
+            
         if self.state == DroneState.EXECUTING and self.executing_since is not None:
             try:
                 current_time = pygame.time.get_ticks() / 1000.0
             except Exception:
                 import time
-
                 current_time = time.time()
             if current_time - self.executing_since > 10.0:
                 self._abort_executing()
 
         if self.current_command:
             self.execute_command(drones, obstacles)
+            
         self._maybe_lift_cargo()
         self._sync_cargo_command()
 
@@ -108,17 +109,87 @@ class Drone:
         ).limit(self.max_speed)
         old_pos = Vector2D(self.pos.x, self.pos.y)
         self.pos = self.pos + self.velocity
+        
         try:
             from metrics import add_distance
-
             dist = old_pos.distance_to(self.pos)
             self.distance_traveled += dist
             add_distance(dist)
         except Exception:
             pass
+            
         self.acceleration = Vector2D(0, 0)
         self.pos.x = max(10, min(config.SCREEN_WIDTH - 10, self.pos.x))
         self.pos.y = max(10, min(config.SCREEN_HEIGHT - 10, self.pos.y))
+
+        # ==================== ДЕЦЕНТРАЛИЗОВАННАЯ ЛОГИКА ====================
+        if not config.USE_COORDINATOR and self.alive:
+            
+            # 1. Проверка здоровья
+            if self.hp < config.HP_LOW and self.state not in (DroneState.REPAIRING, DroneState.CARRYING):
+                if self.state == DroneState.EXECUTING:
+                    self._abort_executing()
+                    
+                available_workshops = []
+                for w in workshops:
+                    load = sum(1 for d in drones if (d.state == DroneState.REPAIRING and w.rect.collidepoint(int(d.pos.x), int(d.pos.y))) or (d.current_command and d.current_command.cmd_type == CommandType.REPAIR and d.current_command.target_pos == (w.rect.centerx, w.rect.centery)))
+                    if load < 2:
+                        available_workshops.append(w)
+                        
+                if available_workshops:
+                    nearest = min(available_workshops, key=lambda w: self.pos.distance_to(Vector2D(w.rect.centerx, w.rect.centery)))
+                    self.current_command = Command(CommandType.REPAIR, target_pos=(nearest.rect.centerx, nearest.rect.centery))
+                    self.state = DroneState.MOVING
+                else:
+                    if self.state == DroneState.IDLE:
+                        self.velocity = Vector2D(0, 0)
+                return 
+                
+            # 2. Проверка энергии
+            if self.energy < config.ENERGY_LOW and self.state not in (DroneState.RECHARGING, DroneState.CARRYING):
+                if self.state == DroneState.EXECUTING:
+                    self._abort_executing()
+                    
+                available_stations = []
+                for c in charging_stations:
+                    load = sum(1 for d in drones if (d.state == DroneState.RECHARGING and c.rect.collidepoint(int(d.pos.x), int(d.pos.y))) or (d.current_command and d.current_command.cmd_type == CommandType.RECHARGE and d.current_command.target_pos == (c.rect.centerx, c.rect.centery)))
+                    if load < 2:
+                        available_stations.append(c)
+                        
+                if available_stations:
+                    nearest = min(available_stations, key=lambda c: self.pos.distance_to(Vector2D(c.rect.centerx, c.rect.centery)))
+                    self.current_command = Command(CommandType.RECHARGE, target_pos=(nearest.rect.centerx, nearest.rect.centery))
+                    self.state = DroneState.MOVING
+                else:
+                    if self.state == DroneState.IDLE:
+                        self.velocity = Vector2D(0, 0)
+                return 
+                
+            # 3. Поиск свободных грузов (только для свободных дронов)
+            if self.state == DroneState.IDLE and self.current_command is None:
+                if objects:
+                    available_cargo = [
+                        o for o in objects
+                        if not getattr(o, "picked_up", False)
+                        and not getattr(o, "delivered", False)
+                        and len(getattr(o, "carriers", [])) < getattr(o, "required_carriers", 1)
+                    ]
+                    if available_cargo:
+                        # Приоритет: 
+                        # 1. Идем к грузам, где уже стоят дроны
+                        # 2. Легкие грузы
+                        # 3. Дистанция
+                        nearest_cargo = min(available_cargo, key=lambda o: (
+                            -len(getattr(o, "carriers", [])), 
+                            getattr(o, "required_carriers", 1), 
+                            self.pos.distance_to(o.pos)
+                        ))
+                        self.current_command = Command(
+                            CommandType.PICK_UP, 
+                            target_pos=(int(nearest_cargo.pos.x), int(nearest_cargo.pos.y)), 
+                            target_object=nearest_cargo
+                        )
+                        self.state = DroneState.MOVING
 
     def _in_formation(self):
         return self.current_command and getattr(self.current_command, "cmd_type", None) == CommandType.FORMATION
@@ -181,22 +252,23 @@ class Drone:
                         current_time = pygame.time.get_ticks() / 1000.0
                     except Exception:
                         import time
-
                         current_time = time.time()
 
                     last_pair_time = max(getattr(self, "last_collision_time", 0.0), getattr(drone, "last_collision_time", 0.0))
                     if current_time - last_pair_time > config.COLLISION_COOLDOWN:
-                        try:
-                            from metrics import increment_collision
+                        # Считаем за ДТП только столкновения на скорости (убираем случайные касания в толпе)
+                        if self.velocity.length() > 0.8 or drone.velocity.length() > 0.8:
+                            try:
+                                from metrics import increment_collision
+                                increment_collision()
+                            except Exception:
+                                pass
+                            self.last_collision_time = current_time
+                            drone.last_collision_time = current_time
 
-                            increment_collision()
-                        except Exception:
-                            pass
-                        self.last_collision_time = current_time
-                        drone.last_collision_time = current_time
-
-                    if self.velocity.length() > 0.5:
-                        self.hp = max(0, self.hp - config.DRONE_COLLISION_DAMAGE)
+                            if self.velocity.length() > 0.8:
+                                self.hp = max(0, self.hp - config.DRONE_COLLISION_DAMAGE)
+                                
                     diff = self.pos - drone.pos
                     push = diff.normalize() * 1.5 if diff.length() > 0 else Vector2D(0, 0)
                     self.pos = self.pos + push
@@ -249,7 +321,6 @@ class Drone:
                     self.executing_since = pygame.time.get_ticks() / 1000.0
                 except Exception:
                     import time
-
                     self.executing_since = time.time()
         else:
             self.move_to_target(cmd.target_object.pos.as_tuple(), obstacles, drones)
@@ -316,6 +387,46 @@ class Drone:
             steer = (target - self.pos).normalize() * self.max_speed - self.velocity
             self.apply_force(steer.limit(self.max_force * 0.5))
 
+    def avoid_moving_drones(self, drones: List) -> Vector2D:
+        steer = Vector2D(0, 0)
+        count = 0
+
+        forward = self.velocity.normalize() if self.velocity.length() > 0.1 else Vector2D(0, 0)
+
+        for drone in drones:
+            if drone is self:
+                continue
+
+            offset = drone.pos - self.pos
+            dist = offset.length()
+            if dist <= 0 or dist > config.SENSOR_COLLISION_RANGE * 1.8:
+                continue
+
+            other_dir = drone.velocity.normalize() if drone.velocity.length() > 0.1 else Vector2D(0, 0)
+
+            # Берем только тех, кто реально впереди по курсу
+            if forward.length() > 0 and (forward.x * offset.x + forward.y * offset.y) < 0:
+                continue
+
+            # Усиливаем реакцию на встречный курс
+            head_on = 0.0
+            if forward.length() > 0 and other_dir.length() > 0:
+                head_on = max(0.0, -(forward.x * other_dir.x + forward.y * other_dir.y))
+
+            side = Vector2D(-offset.y, offset.x)
+            if side.length() > 0:
+                side = side.normalize()
+
+            strength = (1.0 / max(dist, 1.0)) * (1.0 + 2.5 * head_on)
+            steer = steer + side * strength
+            count += 1
+
+        if count == 0:
+            return Vector2D(0, 0)
+
+        steer = (steer / count).normalize() * self.max_speed - self.velocity
+        return steer.limit(self.max_force * 2.2)
+
     def move_to_target(self, target_pos: Tuple[float, float], obstacles: List, drones: List = None):
         target = Vector2D(*target_pos)
         distance = self.pos.distance_to(target)
@@ -376,7 +487,7 @@ class Drone:
                 if drones:
                     sep = self.separate(drones)
                     if sep.length() > 0:
-                        desired = desired + sep * 0.6
+                        desired = desired + sep * 1.2
                 self.velocity = desired.limit(self.max_speed * self._carry_speed_factor())
                 self.acceleration = Vector2D(0, 0)
         else:
@@ -406,7 +517,7 @@ class Drone:
                 if drones:
                     sep = self.separate(drones)
                     if sep.length() > 0:
-                        desired = desired + sep * 0.6
+                        desired = desired + sep * 1.2
                 self.velocity = desired.limit(self.max_speed * self._carry_speed_factor())
                 self.acceleration = Vector2D(0, 0)
 
@@ -475,7 +586,6 @@ class Drone:
         self.alive = False
         try:
             from metrics import increment_dead
-
             increment_dead()
         except Exception:
             pass
@@ -615,4 +725,3 @@ class Drone:
                 pygame.draw.circle(screen, config.CYAN, (int(wp.x), int(wp.y)), config.PATH_WAYPOINT_RADIUS)
         font = pygame.font.Font(None, 16)
         screen.blit(font.render(str(self.id), True, config.BLACK), (x - 5, y - config.DRONE_ID_OFFSET_Y))
-

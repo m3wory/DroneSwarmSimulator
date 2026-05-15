@@ -15,7 +15,7 @@ class CoordinatorDrone(Drone):
         self.task_queue = []
         self.auction_in_progress = False
 
-    def update(self, dt: float, drones: List, obstacles: List):
+    def update(self, dt: float, drones: List, obstacles: List, objects: List = None, charging_stations: List = None, workshops: List = None):
         self.velocity = Vector2D(0, 0)
         self.acceleration = Vector2D(0, 0)
         for sensor in self.sensors.values():
@@ -180,4 +180,3 @@ class CoordinatorDrone(Drone):
         import pygame
 
         pygame.draw.circle(screen, config.PURPLE, (x, y), self.size + 4, 2)
-

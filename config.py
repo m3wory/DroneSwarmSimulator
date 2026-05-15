@@ -2,6 +2,9 @@
 Конфигурационный файл для симулятора роя дронов
 """
 
+# ==================== РЕЖИМ СИМУЛЯЦИИ ====================
+USE_COORDINATOR = False  # Переключатель: True - централизованный аукцион, False - распределенный рой
+
 # ==================== Окно и отображение ====================
 SCREEN_WIDTH = 1200
 SCREEN_HEIGHT = 800
@@ -38,11 +41,11 @@ DRONE_MAX_HP = 100.0
 DRONE_MAX_ENERGY = 100.0
 DRONE_SPEED = 3.0
 DRONE_MAX_SPEED = 3.4
-DRONE_MAX_FORCE = 0.32
+DRONE_MAX_FORCE = 0.5
 DRONE_MOTION_ALPHA = 0.16
 DRONE_FORMATION_ALPHA = 0.08
 DRONE_PERCEPTION_RADIUS = 90.0
-DRONE_SEPARATION_RADIUS = 36.0
+DRONE_SEPARATION_RADIUS = 56.0
 DRONE_SIZE = 8
 DRONE_COLOR = BLUE
 
@@ -53,7 +56,7 @@ COORDINATOR_COLOR = PURPLE
 # ==================== Параметры сенсоров ====================
 SENSOR_PROXIMITY_RANGE = 80.0
 SENSOR_OBJECT_DETECTOR_RANGE = 100.0
-SENSOR_COLLISION_RANGE = 30.0
+SENSOR_COLLISION_RANGE = 45.0
 
 # ==================== Параметры движения ====================
 ENERGY_DRAIN_RATE = 0.2
@@ -71,7 +74,7 @@ DRONE_COLLISION_DAMAGE = 0.2
 A_STAR_GRID_SIZE = 20
 
 # ==================== Параметры поведения дронов ====================
-BOIDS_SEPARATION_WEIGHT = 2.2
+BOIDS_SEPARATION_WEIGHT = 4.0
 BOIDS_ALIGN_WEIGHT = 1.0
 BOIDS_COHESION_WEIGHT = 1.0
 BOIDS_OBSTACLE_AVOIDANCE_WEIGHT = 3.0
@@ -125,11 +128,6 @@ CONTEXT_MENU_WIDTH = 150
 CONTEXT_MENU_ITEM_HEIGHT = 30
 CONTEXT_MENU_BG_ALPHA = 230
 
-# Редактор меню
-EDITOR_MENU_WIDTH = 180
-EDITOR_MENU_X_OFFSET = 190
-EDITOR_MENU_Y_OFFSET = 50
-
 # ==================== Параметры координатора ====================
 COORDINATOR_MIN_HP_FOR_TASK = 40
 COORDINATOR_MIN_ENERGY_FOR_TASK = 30
@@ -160,7 +158,6 @@ FORMATION_DRONE_COUNT = 4
 UNLOAD_SUBSPOTS = 6
 
 COORDINATOR_AVOID_ZONE_SIZE = 50
-
 COLLISION_COOLDOWN = 0.6
 
 # ==================== Параметры сетки ====================

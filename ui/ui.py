@@ -1,12 +1,10 @@
 from typing import List, Tuple, Optional
-
 import pygame
 
 import config
-from core.enums import CommandType, EditorMode
+from core.enums import CommandType
 from core.command import Command
 from entities.coordinator import CoordinatorDrone
-
 
 class UI:
     def __init__(self):
@@ -20,17 +18,6 @@ class UI:
             ("Pick up", CommandType.PICK_UP),
             ("Drop", CommandType.DROP_OBJECT),
             ("Formation", CommandType.FORMATION),
-        ]
-        self.editor_menu_open = False
-        self.editor_menu_items = [
-            ("Obstacle", EditorMode.ADD_OBSTACLE),
-            ("Charging Station", EditorMode.ADD_CHARGING_STATION),
-            ("Workshop", EditorMode.ADD_WORKSHOP),
-            ("Object (Small)", EditorMode.ADD_OBJECT_SMALL),
-            ("Object (Medium)", EditorMode.ADD_OBJECT_MEDIUM),
-            ("Object (Large)", EditorMode.ADD_OBJECT_LARGE),
-            ("Object (Cycle)", EditorMode.ADD_OBJECT),
-            ("Delete", EditorMode.DELETE),
         ]
         self.info_panel_open = True
         self.info_panel_collapsed = False
@@ -46,7 +33,7 @@ class UI:
         self._print_help_to_console()
 
     def _print_help_to_console(self):
-        for text in ["LMB - Select drone", "RMB - Command menu", "Drag - Select group", "E - Editor mode", "Space - Formation", "ESC - Deselect/Close"]:
+        for text in ["LMB - Select drone", "RMB - Command menu", "Drag - Select group", "Space - Formation", "ESC - Deselect/Close"]:
             print(f"  - {text}")
 
     def draw_info_panel(self, screen: pygame.Surface, selected_drones: List):
@@ -141,17 +128,3 @@ class UI:
     def draw_context_menu(self, screen: pygame.Surface):
         if self.context_menu_open:
             self._draw_menu(screen, self.context_menu_items, self.context_menu_pos, config.CONTEXT_MENU_WIDTH)
-
-    def draw_editor_menu(self, screen: pygame.Surface):
-        if self.editor_menu_open:
-            self._draw_menu(
-                screen,
-                self.editor_menu_items,
-                (config.SCREEN_WIDTH - config.EDITOR_MENU_X_OFFSET, config.EDITOR_MENU_Y_OFFSET),
-                config.EDITOR_MENU_WIDTH,
-                "EDITOR MODE",
-            )
-
-    def draw_help(self, screen: pygame.Surface):
-        return
-
